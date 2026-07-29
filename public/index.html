@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart LPG Dashboard</title>
+
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#09090b">
+    <link rel="apple-touch-icon" href="icon-192.png">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <header class="hero">
+            <div>
+                <p class="eyebrow">Realtime Monitoring</p>
+                <h1>Smart LPG Gas Monitoring System</h1>
+                <p class="subtitle">Live sensor telemetry with a cleaner black interface and smoother realtime updates.</p>
+            </div>
+
+            <div class="hero-meta">
+                <div class="pill" id="connectionState">Connecting...</div>
+                <div class="timestamp">Last update: <span id="lastUpdated">Waiting for data</span></div>
+            </div>
+        </header>
+
+        <div class="cards">
+            <div class="card">
+                <h3>Gas Status</h3>
+                <h2 id="status">SAFE</h2>
+                <p id="statusDetail">System is stable</p>
+            </div>
+
+            <div class="card">
+                <h3>MQ2 Sensor</h3>
+                <h2 id="mq2">0</h2>
+                <p>Combustible gas level</p>
+            </div>
+
+            <div class="card">
+                <h3>MQ135 Sensor</h3>
+                <h2 id="mq135">150</h2>
+                <p>Air quality reading</p>
+            </div>
+
+            <div class="card">
+                <h3>WiFi</h3>
+                <h2 id="wifi">10.62.116.8</h2>
+                <p id="streamMode">Live stream inactive</p>
+            </div>
+
+            <div class="card">
+                <h3>LED</h3>
+                <h2 class="device-status">
+                    <span class="indicator-light off" id="ledLight" aria-hidden="true"></span>
+                    <span id="led">OFF</span>
+                </h2>
+                <p id="ledDetail">Indicator is idle</p>
+            </div>
+
+            <div class="card">
+                <h3>Buzzer</h3>
+                <h2 class="device-status">
+                    <span class="indicator-light off" id="buzzerLight" aria-hidden="true"></span>
+                    <span id="buzzer">OFF</span>
+                </h2>
+                <p id="buzzerDetail">Alarm is silent</p>
+            </div>
+        </div>
+
+        <section class="lcd-card">
+            <div class="lcd-header">
+                <div>
+                    <h3>LCD Screen</h3>
+                    <p>Live text mirrored from the project display</p>
+                </div>
+                <div class="lcd-badge">16x2 Live View</div>
+            </div>
+
+            <div class="lcd-shell">
+                <div class="lcd-screen">
+                    <div class="lcd-row" id="lcdLine1">Smart LPG Ready</div>
+                    <div class="lcd-row" id="lcdLine2">MQ135 150 | 10.62.116.8</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="chart-card">
+            <div class="chart-header">
+                <div>
+                    <h3>MQ135 Trend</h3>
+                    <p>Latest 30 air quality readings from the live feed</p>
+                </div>
+            </div>
+
+            <canvas id="airChart"></canvas>
+        </section>
+    </div>
+
+<script src="script.js"></script>
+<script>
+    if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+            navigator.serviceWorker.register("/sw.js").catch(() => {});
+        });
+    }
+</script>
+
+</body>
+</html>
