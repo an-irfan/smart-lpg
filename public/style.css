@@ -14,6 +14,7 @@
     --primary-soft: rgba(255, 255, 255, 0.08);
     --safe: #22c55e;
     --warning: #f59e0b;
+    --alert: #f97316;
     --danger: #f43f5e;
     --shadow: 0 18px 60px rgba(0, 0, 0, 0.45);
 }
@@ -280,8 +281,63 @@ h1 {
     color: var(--warning);
 }
 
+.alert {
+    color: var(--alert);
+}
+
 .danger {
     color: var(--danger);
+}
+
+.card-bg-safe,
+.card-bg-warning,
+.card-bg-alert,
+.card-bg-danger {
+    transition: background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+}
+
+.card-bg-safe {
+    background:
+        linear-gradient(180deg, rgba(34, 197, 94, 0.15), transparent 55%),
+        linear-gradient(180deg, rgba(34, 197, 94, 0.08), rgba(10, 10, 12, 0.98));
+    border-color: rgba(34, 197, 94, 0.3);
+}
+
+.card-bg-safe:hover {
+    box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.1), 0 18px 60px rgba(34, 197, 94, 0.15);
+}
+
+.card-bg-warning {
+    background:
+        linear-gradient(180deg, rgba(245, 158, 11, 0.15), transparent 55%),
+        linear-gradient(180deg, rgba(245, 158, 11, 0.08), rgba(10, 10, 12, 0.98));
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+.card-bg-warning:hover {
+    box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.1), 0 18px 60px rgba(245, 158, 11, 0.15);
+}
+
+.card-bg-alert {
+    background:
+        linear-gradient(180deg, rgba(249, 115, 22, 0.18), transparent 55%),
+        linear-gradient(180deg, rgba(249, 115, 22, 0.1), rgba(10, 10, 12, 0.98));
+    border-color: rgba(249, 115, 22, 0.35);
+}
+
+.card-bg-alert:hover {
+    box-shadow: 0 0 0 1px rgba(249, 115, 22, 0.12), 0 18px 60px rgba(249, 115, 22, 0.2);
+}
+
+.card-bg-danger {
+    background:
+        linear-gradient(180deg, rgba(244, 63, 94, 0.22), transparent 55%),
+        linear-gradient(180deg, rgba(244, 63, 94, 0.12), rgba(10, 10, 12, 0.98));
+    border-color: rgba(244, 63, 94, 0.4);
+}
+
+.card-bg-danger:hover {
+    box-shadow: 0 0 0 1px rgba(244, 63, 94, 0.15), 0 18px 60px rgba(244, 63, 94, 0.25);
 }
 
 .chart-card {
@@ -303,9 +359,13 @@ h1 {
     margin: 8px 0 0;
 }
 
-#airChart {
-    width: 100%;
-    height: calc(100% - 74px);
+#airChart,
+#mq2Chart {
+    width: 100% !important;
+    height: calc(100% - 74px) !important;
+    max-width: 100%;
+    max-height: 100%;
+    display: block;
 }
 
 .lcd-card {

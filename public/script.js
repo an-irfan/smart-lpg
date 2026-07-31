@@ -1,13 +1,16 @@
 const MAX_POINTS = 30;
-const ctx = document.getElementById("airChart");
+const airCtx = document.getElementById("airChart");
+const mq2Ctx = document.getElementById("mq2Chart");
 const mq2Element = document.getElementById("mq2");
 const mq135Element = document.getElementById("mq135");
 const statusElement = document.getElementById("status");
 const statusDetailElement = document.getElementById("statusDetail");
+const statusCardElement = document.getElementById("statusCard");
 const wifiElement = document.getElementById("wifi");
 const ledElement = document.getElementById("led");
 const ledLightElement = document.getElementById("ledLight");
 const ledDetailElement = document.getElementById("ledDetail");
+const ledCardElement = document.getElementById("ledCard");
 const buzzerElement = document.getElementById("buzzer");
 const buzzerLightElement = document.getElementById("buzzerLight");
 const buzzerDetailElement = document.getElementById("buzzerDetail");
@@ -46,18 +49,36 @@ function formatLcdLine(value, fallback) {
     return text || fallback;
 }
 
-function getStatusTone(status) {
+function getStatusTone(status, mq2) {
     const normalizedStatus = String(status || "").toUpperCase();
 
     if (normalizedStatus.includes("DANGER") || normalizedStatus.includes("LEAK")) {
         return "danger";
     }
 
-    if (normalizedStatus.includes("WARN") || normalizedStatus.includes("ALERT")) {
+    if (normalizedStatus.includes("ALERT")) {
+        return "alert";
+    }
+
+    if (normalizedStatus.includes("WARN")) {
         return "warning";
     }
 
+    const mq2Val = Number(mq2) || 0;
+    if (mq2Val >= 800) return "danger";
+    if (mq2Val >= 500) return "alert";
+    if (mq2Val >= 200) return "warning";
+
     return "safe";
+}
+
+function getCardBgClass(tone) {
+    switch (tone) {
+        case "danger": return "card-bg-danger";
+        case "alert": return "card-bg-alert";
+        case "warning": return "card-bg-warning";
+        default: return "card-bg-safe";
+    }
 }
 
 function getActuatorTone(state) {
@@ -73,7 +94,7 @@ function updateConnectionState(label, tone) {
     connectionStateElement.className = `pill ${tone}`;
 }
 
-function trimChart() {
+function trimChart(chart) {
     while (chart.data.labels.length > MAX_POINTS) {
         chart.data.labels.shift();
         chart.data.datasets[0].data.shift();
@@ -85,10 +106,40 @@ function appendPoint(snapshot) {
         return;
     }
 
-    chart.data.labels.push(formatChartTime(snapshot.updatedAt));
-    chart.data.datasets[0].data.push(snapshot.mq135);
-    trimChart();
+    const timeLabel = formatChartTime(snapshot.updatedAt);
+
+    airChart.data.labels.push(timeLabel);
+    airChart.data.datasets[0].data.push(snapshot.mq135);
+    trimChart(airChart);
+
+    mq2Chart.data.labels.push(timeLabel);
+    mq2Chart.data.datasets[0].data.push(snapshot.mq2);
+    trimChart(mq2Chart);
+
     lastPointId = snapshot.id;
+}
+
+function getChartColor(tone, type) {
+    if (type === "mq2") {
+        switch (tone) {
+            case "danger": return { border: "#f43f5e", bg: "rgba(244, 63, 94, 0.15)" };
+            case "alert": return { border: "#f97316", bg: "rgba(249, 115, 22, 0.15)" };
+            case "warning": return { border: "#f59e0b", bg: "rgba(245, 158, 11, 0.15)" };
+            default: return { border: "#22c55e", bg: "rgba(34, 197, 94, 0.15)" };
+        }
+    }
+    switch (tone) {
+        case "danger": return { border: "#f43f5e", bg: "rgba(244, 63, 94, 0.12)" };
+        case "alert": return { border: "#f97316", bg: "rgba(249, 115, 22, 0.12)" };
+        case "warning": return { border: "#f59e0b", bg: "rgba(245, 158, 11, 0.12)" };
+        default: return { border: "#38bdf8", bg: "rgba(56, 189, 248, 0.12)" };
+    }
+}
+
+function updateChartColors(chart, tone, type) {
+    const colors = getChartColor(tone, type);
+    chart.data.datasets[0].borderColor = colors.border;
+    chart.data.datasets[0].backgroundColor = colors.bg;
 }
 
 function renderSnapshot(snapshot, shouldAppend = true) {
@@ -99,28 +150,55 @@ function renderSnapshot(snapshot, shouldAppend = true) {
     mq2Element.textContent = snapshot.mq2;
     mq135Element.textContent = snapshot.mq135;
     statusElement.textContent = snapshot.gasStatus;
-    wifiElement.textContent = snapshot.wifi;
-    ledElement.textContent = snapshot.led || "OFF";
+    wifiElement.textContent = "House 1";
+
+    const tone = getStatusTone(snapshot.gasStatus, snapshot.mq2);
+    const ledIsOn = String(snapshot.led || "").toUpperCase() === "ON";
+
+    if (ledIsOn) {
+        if (tone === "danger" || tone === "alert") {
+            ledElement.textContent = "RED";
+            ledElement.className = "danger";
+        } else {
+            ledElement.textContent = "GREEN";
+            ledElement.className = "safe";
+        }
+    } else {
+        ledElement.textContent = "GREEN";
+        ledElement.className = "safe";
+    }
+
     buzzerElement.textContent = snapshot.buzzer || "OFF";
     lcdLine1Element.textContent = formatLcdLine(snapshot.lcdLine1, "Smart LPG Ready");
-    lcdLine2Element.textContent = formatLcdLine(snapshot.lcdLine2, `MQ135 ${snapshot.mq135} | ${snapshot.wifi}`);
+    lcdLine2Element.textContent = formatLcdLine(snapshot.lcdLine2, `MQ135 ${snapshot.mq135} | House 1`);
     lastUpdatedElement.textContent = formatDisplayTime(snapshot.updatedAt);
 
-    const tone = getStatusTone(snapshot.gasStatus);
-    const ledTone = getLedTone(snapshot.led);
     const buzzerTone = getActuatorTone(snapshot.buzzer);
+    const ledLightTone = (tone === "danger" || tone === "alert") ? "danger" : "safe";
 
     statusElement.className = tone;
-    ledElement.className = ledTone;
     buzzerElement.className = buzzerTone;
-    ledLightElement.className = `indicator-light ${snapshot.led === "ON" ? "on" : "off"} ${ledTone}`;
+    ledLightElement.className = `indicator-light on ${ledLightTone}`;
     buzzerLightElement.className = `indicator-light ${snapshot.buzzer === "ON" ? "on" : "off"} ${buzzerTone}`;
+
+    const cardBgClass = getCardBgClass(tone);
+    statusCardElement.className = `card ${cardBgClass}`;
+
+    if (tone === "danger") {
+        ledCardElement.className = "card card-bg-danger";
+    } else {
+        ledCardElement.className = "card card-bg-safe";
+    }
+
     statusDetailElement.textContent =
         tone === "danger" ? "Immediate attention required"
+        : tone === "alert" ? "High gas levels detected"
         : tone === "warning" ? "Conditions need checking"
         : "System is stable";
     ledDetailElement.textContent =
-        snapshot.led === "ON" ? "Indicator is active" : "Indicator is idle";
+        tone === "danger" ? "Danger indicator active"
+        : tone === "alert" ? "Warning indicator active"
+        : "Indicator is active (Normal)";
     buzzerDetailElement.textContent =
         buzzerTone === "danger" ? "Alarm is sounding" : "Alarm is silent";
 
@@ -130,74 +208,106 @@ function renderSnapshot(snapshot, shouldAppend = true) {
         lastPointId = Math.max(lastPointId, snapshot.id || 0);
     }
 
-    chart.update("none");
+    updateChartColors(airChart, tone, "mq135");
+    updateChartColors(mq2Chart, tone, "mq2");
+
+    airChart.update("none");
+    mq2Chart.update("none");
 }
 
-const chart = new Chart(ctx, {
-    type: "line",
-    data: {
-        labels: [],
-        datasets: [
-            {
-                label: "MQ135",
-                data: [],
-                borderColor: "#fafafa",
-                backgroundColor: "rgba(255, 255, 255, 0.08)",
-                tension: 0.3,
-                borderWidth: 3,
-                pointRadius: 0,
-                pointHoverRadius: 5,
-                pointHitRadius: 14,
-                fill: true
-            }
-        ]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        interaction: {
-            mode: "index",
-            intersect: false
-        },
-        plugins: {
-            legend: {
-                labels: {
-                    color: "#fafafa",
-                    usePointStyle: true,
-                    pointStyle: "circle"
+function createChart(ctx, label, borderColor, bgColor, yMax) {
+    return new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: [],
+            datasets: [
+                {
+                    label: label,
+                    data: [],
+                    borderColor: borderColor,
+                    backgroundColor: bgColor,
+                    tension: 0.35,
+                    borderWidth: 3,
+                    pointRadius: 0,
+                    pointHoverRadius: 5,
+                    pointHitRadius: 14,
+                    fill: true,
+                    capBezierPoints: true,
+                    borderJoinStyle: "round"
                 }
-            }
+            ]
         },
-        scales: {
-            x: {
-                ticks: {
-                    color: "#a1a1aa"
-                },
-                grid: {
-                    color: "rgba(255, 255, 255, 0.08)"
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: "index",
+                intersect: false
+            },
+            plugins: {
+                legend: {
+                    labels: {
+                        color: "#fafafa",
+                        usePointStyle: true,
+                        pointStyle: "circle"
+                    }
                 }
             },
-            y: {
-                min: 0,
-                max: 500,
-                ticks: {
-                    color: "#a1a1aa",
-                    stepSize: 100
+            scales: {
+                x: {
+                    ticks: {
+                        color: "#a1a1aa",
+                        maxRotation: 0,
+                        autoSkip: true,
+                        maxTicksLimit: 8
+                    },
+                    grid: {
+                        color: "rgba(255, 255, 255, 0.06)",
+                        drawBorder: false
+                    }
                 },
-                grid: {
-                    color: "rgba(255, 255, 255, 0.08)"
+                y: {
+                    beginAtZero: true,
+                    suggestedMin: 0,
+                    suggestedMax: yMax,
+                    ticks: {
+                        color: "#a1a1aa",
+                        stepSize: Math.ceil(yMax / 5)
+                    },
+                    grid: {
+                        color: "rgba(255, 255, 255, 0.06)",
+                        drawBorder: false
+                    }
+                }
+            },
+            layout: {
+                padding: {
+                    top: 10,
+                    right: 10,
+                    bottom: 10,
+                    left: 10
+                }
+            },
+            elements: {
+                line: {
+                    cubicInterpolationMode: "monotone"
                 }
             }
         }
-    }
-});
+    });
+}
+
+const airChart = createChart(airCtx, "MQ135", "#38bdf8", "rgba(56, 189, 248, 0.12)", 500);
+const mq2Chart = createChart(mq2Ctx, "MQ2", "#22c55e", "rgba(34, 197, 94, 0.15)", 1024);
 
 async function loadHistory() {
     const response = await fetch("/api/history");
     const history = await response.json();
 
-    chart.data.labels = [];
-    chart.data.datasets[0].data = [];
+    airChart.data.labels = [];
+    airChart.data.datasets[0].data = [];
+    mq2Chart.data.labels = [];
+    mq2Chart.data.datasets[0].data = [];
     lastPointId = 0;
 
     history.slice(-MAX_POINTS).forEach((snapshot) => {
@@ -207,7 +317,8 @@ async function loadHistory() {
     if (history.length > 0) {
         renderSnapshot(history[history.length - 1], false);
     } else {
-        chart.update("none");
+        airChart.update("none");
+        mq2Chart.update("none");
     }
 }
 

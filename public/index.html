@@ -29,7 +29,7 @@
         </header>
 
         <div class="cards">
-            <div class="card">
+            <div class="card" id="statusCard">
                 <h3>Gas Status</h3>
                 <h2 id="status">SAFE</h2>
                 <p id="statusDetail">System is stable</p>
@@ -49,15 +49,15 @@
 
             <div class="card">
                 <h3>WiFi</h3>
-                <h2 id="wifi">10.62.116.8</h2>
+                <h2 id="wifi">House 1</h2>
                 <p id="streamMode">Live stream inactive</p>
             </div>
 
-            <div class="card">
+            <div class="card" id="ledCard">
                 <h3>LED</h3>
                 <h2 class="device-status">
                     <span class="indicator-light off" id="ledLight" aria-hidden="true"></span>
-                    <span id="led">OFF</span>
+                    <span id="led">GREEN</span>
                 </h2>
                 <p id="ledDetail">Indicator is idle</p>
             </div>
@@ -84,7 +84,7 @@
             <div class="lcd-shell">
                 <div class="lcd-screen">
                     <div class="lcd-row" id="lcdLine1">Smart LPG Ready</div>
-                    <div class="lcd-row" id="lcdLine2">MQ135 150 | 10.62.116.8</div>
+                <div class="lcd-row" id="lcdLine2">MQ135 150 | House 1</div>
                 </div>
             </div>
         </section>
@@ -98,6 +98,17 @@
             </div>
 
             <canvas id="airChart"></canvas>
+        </section>
+
+        <section class="chart-card">
+            <div class="chart-header">
+                <div>
+                    <h3>MQ2 Trend</h3>
+                    <p>Latest 30 combustible gas readings from the live feed</p>
+                </div>
+            </div>
+
+            <canvas id="mq2Chart"></canvas>
         </section>
     </div>
 
