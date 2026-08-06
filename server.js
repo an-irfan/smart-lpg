@@ -236,3 +236,36 @@ app.listen(PORT, "0.0.0.0", () => {
     console.log(`🚀 Server running at http://localhost:${PORT}`);
     console.log(`📶 Wi-Fi LAN URL: http://${getPreferredWifiIp()}:${PORT}`);
 });
+
+const nodemailer = require("nodemailer");
+
+const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+        user: "iot.lpg.detector@gmail.com",
+        pass: "sahina@12345"
+    }
+});
+async function sendGasAlert() {
+
+    await transporter.sendMail({
+
+        from: "iot.lpg.detector@gmail.com",
+
+        to: "sahinayeasmin915@gmail.com",
+
+        subject: "🚨 LPG Gas Leakage Detected",
+
+        text: `
+Gas leakage has been detected.
+
+Time: ${new Date().toLocaleString()}
+
+Please check immediately.
+
+Smart LPG Monitoring System
+        `
+
+    });
+
+}
